@@ -3,7 +3,6 @@ from collections.abc import Sequence
 from typing import Any
 
 from fastapi import Request
-from redis import asyncio as aioredis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from common.constant import CommonConstant
@@ -21,6 +20,7 @@ from module_admin.entity.vo.dict_vo import (
     DictTypePageQueryModel,
 )
 from utils.common_util import CamelCaseUtil
+from utils.cache_store import CacheStore
 from utils.excel_util import ExcelUtil
 
 
@@ -257,7 +257,7 @@ class DictDataService:
         return dict_data_list_result
 
     @classmethod
-    async def init_cache_sys_dict_services(cls, query_db: AsyncSession, redis: aioredis.Redis) -> None:
+    async def init_cache_sys_dict_services(cls, query_db: AsyncSession, redis: CacheStore) -> None:
         """
         应用初始化：获取所有字典类型对应的字典数据信息并缓存service
 
@@ -282,7 +282,7 @@ class DictDataService:
 
     @classmethod
     async def query_dict_data_list_from_cache_services(
-        cls, redis: aioredis.Redis, dict_type: str
+        cls, redis: CacheStore, dict_type: str
     ) -> list[dict[str, Any]]:
         """
         从缓存获取字典数据列表信息service

@@ -26,7 +26,6 @@ pydantic>=2.11.4
 pydantic-validation-decorator==0.1.5
 PyJWT[crypto]==2.11.0
 PyMySQL==1.1.2
-redis==7.1.0
 ruff==0.15.0
 SQLAlchemy[asyncio]==2.0.46
 sqlglot[rs]==28.10.0

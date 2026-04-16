@@ -1,5 +1,4 @@
 services:
-  # 前端服务
   ruoyi-frontend:
     build:
       context: ./ruoyi-fastapi-frontend
@@ -15,7 +14,6 @@ services:
     networks:
       - ruoyi-network
 
-  # 后端服务（PostgreSQL版本）
   ruoyi-backend-pg:
     build:
       context: ./ruoyi-fastapi-backend
@@ -27,12 +25,9 @@ services:
     depends_on:
       ruoyi-pg:
         condition: service_healthy
-      ruoyi-redis:
-        condition: service_healthy
     networks:
       - ruoyi-network
 
-  # PostgreSQL服务
   ruoyi-pg:
     image: postgres:14
     container_name: ruoyi-pg
@@ -44,6 +39,7 @@ services:
       - "15432:5432"
     volumes:
       - ./ruoyi-fastapi-backend/sql/ruoyi-fastapi-pg.sql:/docker-entrypoint-initdb.d/ruoyi-fastapi-pg.sql
+      - ./ruoyi-fastapi-backend/sql/ruoyi-fastapi-cache-pg.sql:/docker-entrypoint-initdb.d/ruoyi-fastapi-cache-pg.sql
     networks:
       - ruoyi-network
     healthcheck:
@@ -52,21 +48,6 @@ services:
       timeout: 10s
       retries: 30
 
-  # Redis服务
-  ruoyi-redis:
-    image: redis:latest
-    container_name: ruoyi-redis
-    ports:
-      - "16379:6379"
-    networks:
-      - ruoyi-network
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 10s
-      retries: 30
-
-# 网络配置
 networks:
   ruoyi-network:
     name: ruoyi-network

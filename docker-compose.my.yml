@@ -1,5 +1,4 @@
 services:
-  # 前端服务
   ruoyi-frontend:
     build:
       context: ./ruoyi-fastapi-frontend
@@ -15,7 +14,6 @@ services:
     networks:
       - ruoyi-network
 
-  # 后端服务（MySQL版本）
   ruoyi-backend-my:
     build:
       context: ./ruoyi-fastapi-backend
@@ -27,12 +25,9 @@ services:
     depends_on:
       ruoyi-mysql:
         condition: service_healthy
-      ruoyi-redis:
-        condition: service_healthy
     networks:
       - ruoyi-network
 
-  # MySQL服务
   ruoyi-mysql:
     image: mysql:8.0
     container_name: ruoyi-mysql
@@ -52,21 +47,6 @@ services:
       timeout: 10s
       retries: 30
 
-  # Redis服务
-  ruoyi-redis:
-    image: redis:latest
-    container_name: ruoyi-redis
-    ports:
-      - "16379:6379"
-    networks:
-      - ruoyi-network
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 10s
-      retries: 30
-
-# 网络配置
 networks:
   ruoyi-network:
     name: ruoyi-network
