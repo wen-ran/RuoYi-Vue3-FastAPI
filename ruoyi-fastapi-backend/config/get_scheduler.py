@@ -11,13 +11,11 @@ from apscheduler.executors.asyncio import AsyncIOExecutor
 from apscheduler.executors.pool import ProcessPoolExecutor
 from apscheduler.job import Job
 from apscheduler.jobstores.memory import MemoryJobStore
-from apscheduler.jobstores.redis import RedisJobStore
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.combining import OrTrigger
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.date import DateTrigger
-from redis import asyncio as aioredis
 from sqlalchemy.engine import Engine
 from sqlalchemy.ext.asyncio import AsyncEngine
 
@@ -30,10 +28,11 @@ from config.database import (
     create_sync_db_engine,
     create_sync_session_local,
 )
-from config.env import AppConfig, LogConfig, RedisConfig
+from config.env import AppConfig, LogConfig
 from module_admin.dao.job_dao import JobDao
 from module_admin.entity.vo.job_vo import JobLogModel, JobModel
 from module_admin.service.job_log_service import JobLogService
+from utils.cache_store import CacheStore
 from utils.log_util import logger
 from utils.server_util import StartupUtil, WorkerIdUtil
 
@@ -96,13 +95,6 @@ class MyCronTrigger(CronTrigger):
             diff += 1
 
 
-redis_config = {
-    'host': RedisConfig.redis_host,
-    'port': RedisConfig.redis_port,
-    'username': RedisConfig.redis_username,
-    'password': RedisConfig.redis_password,
-    'db': RedisConfig.redis_database,
-}
 job_defaults = {'coalesce': False, 'max_instance': 1}
 scheduler = AsyncIOScheduler()
 
@@ -115,7 +107,7 @@ class SchedulerUtil:
     # 分布式锁相关类变量
     _is_leader: bool = False
     _worker_id: str = WorkerIdUtil.get_worker_id(LogConfig.log_worker_id)
-    _redis: aioredis.Redis | None = None
+    _cache_store: CacheStore | None = None
     _job_update_time_cache: dict[str, datetime] = {}
     _sync_channel: str = 'scheduler:sync:request'
     _sync_listener_task: asyncio.Task | None = None
@@ -182,8 +174,16 @@ class SchedulerUtil:
             return
         job_stores = {
             'default': MemoryJobStore(),
-            'sqlalchemy': SQLAlchemyJobStore(url=SYNC_SQLALCHEMY_DATABASE_URL, engine=cls._get_jobstore_engine()),
-            'redis': RedisJobStore(**redis_config),
+            'sqlalchemy': SQLAlchemyJobStore(
+                url=SYNC_SQLALCHEMY_DATABASE_URL,
+                engine=cls._get_jobstore_engine(),
+                tablename='apscheduler_jobs',
+            ),
+            'redis': SQLAlchemyJobStore(
+                url=SYNC_SQLALCHEMY_DATABASE_URL,
+                engine=cls._get_jobstore_engine(),
+                tablename='apscheduler_jobs_redis',
+            ),
         }
         executors = {'default': AsyncIOExecutor(), 'processpool': ProcessPoolExecutor(5)}
         scheduler.configure(jobstores=job_stores, executors=executors, job_defaults=job_defaults)
@@ -199,14 +199,14 @@ class SchedulerUtil:
         return not AppConfig.app_reload and AppConfig.app_workers > 1
 
     @classmethod
-    async def init_system_scheduler(cls, redis: aioredis.Redis) -> None:
+    async def init_system_scheduler(cls, redis: CacheStore) -> None:
         """
         应用启动时初始化定时任务（使用分布式锁确保只有一个worker启动scheduler）
 
         :param redis: Redis连接对象
         :return:
         """
-        cls._redis = redis
+        cls._cache_store = redis
         logger.info(f'🔎 Worker {cls._worker_id} 尝试获取 Application 锁...')
 
         acquired = await StartupUtil.acquire_startup_log_gate(
@@ -223,7 +223,7 @@ class SchedulerUtil:
             logger.info(f'⏸️ Worker {cls._worker_id} 未持有 Application 锁，跳过 Scheduler 启动')
 
     @classmethod
-    async def _start_scheduler_as_leader(cls, redis: aioredis.Redis) -> None:
+    async def _start_scheduler_as_leader(cls, redis: CacheStore) -> None:
         """
         以 Leader 身份启动 Scheduler（内部方法，调用前需确保已持有锁）
 
@@ -256,7 +256,7 @@ class SchedulerUtil:
                 name='Scheduler任务同步',
                 replace_existing=True,
             )
-            cls._sync_listener_task = asyncio.create_task(cls._listen_sync_channel(redis))
+            cls._sync_listener_task = asyncio.create_task(cls._listen_sync_signal(redis))
 
         logger.info('✅️ 系统初始定时任务加载成功')
 
@@ -450,8 +450,8 @@ class SchedulerUtil:
             cls._sync_pending = True
             cls._ensure_sync_task()
             return
-        if cls._redis:
-            await cls._redis.publish(cls._sync_channel, cls._worker_id)
+        if cls._cache_store:
+            await cls._cache_store.publish(cls._sync_channel, cls._worker_id)
 
     @classmethod
     def _ensure_sync_task(cls) -> None:
@@ -513,7 +513,7 @@ class SchedulerUtil:
 
         :return: None
         """
-        if not cls._redis:
+        if not cls._cache_store:
             return
         if cls._reacquire_task and not cls._reacquire_task.done():
             return
@@ -528,18 +528,18 @@ class SchedulerUtil:
         """
         try:
             while not cls._is_leader:
-                if not cls._redis:
+                if not cls._cache_store:
                     await asyncio.sleep(cls._reacquire_interval_seconds)
                     continue
                 acquired = await StartupUtil.acquire_startup_log_gate(
-                    redis=cls._redis,
+                    redis=cls._cache_store,
                     lock_key=LockConstant.APP_STARTUP_LOCK_KEY,
                     worker_id=cls._worker_id,
                     lock_expire_seconds=LockConstant.LOCK_EXPIRE_SECONDS,
                 )
                 if acquired:
                     # 直接调用 _start_scheduler_as_leader，避免重复获取锁
-                    await cls._start_scheduler_as_leader(cls._redis)
+                    await cls._start_scheduler_as_leader(cls._cache_store)
                     return
                 await asyncio.sleep(cls._reacquire_interval_seconds)
         except asyncio.CancelledError:
@@ -585,7 +585,7 @@ class SchedulerUtil:
             cls._last_sync_at = datetime.now()
 
     @classmethod
-    async def _listen_sync_channel(cls, redis: aioredis.Redis) -> None:
+    async def _listen_sync_signal(cls, redis: CacheStore) -> None:
         """
         监听同步请求通道
 
@@ -767,10 +767,10 @@ class SchedulerUtil:
             scheduler.shutdown()
             logger.info('✅️ 关闭定时任务成功')
         # 释放锁
-        if cls._redis:
-            current_holder = await cls._redis.get(LockConstant.APP_STARTUP_LOCK_KEY)
+        if cls._cache_store:
+            current_holder = await cls._cache_store.get(LockConstant.APP_STARTUP_LOCK_KEY)
             if current_holder == cls._worker_id:
-                await cls._redis.delete(LockConstant.APP_STARTUP_LOCK_KEY)
+                await cls._cache_store.delete(LockConstant.APP_STARTUP_LOCK_KEY)
                 logger.info(f'🔓 Worker {cls._worker_id} 释放 Application 锁')
 
     @classmethod

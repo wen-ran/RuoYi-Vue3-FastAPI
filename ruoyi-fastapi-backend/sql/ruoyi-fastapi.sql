@@ -1,4 +1,4 @@
--- ----------------------------
+﻿-- ----------------------------
 -- 1、部门表
 -- ----------------------------
 drop table if exists sys_dept;
@@ -809,3 +809,43 @@ create table ai_chat_config (
   update_time             datetime                                   comment '更新时间',
   primary key (chat_config_id)
 ) engine=innodb auto_increment=1 comment = 'AI对话配置表';
+
+-- ----------------------------
+-- 22、系统缓存表
+-- ----------------------------
+drop table if exists sys_cache;
+create table sys_cache (
+  cache_key     varchar(191)    not null                  comment '缓存键',
+  cache_value   longtext        default null              comment '缓存值',
+  expire_at     datetime        default null              comment '过期时间',
+  create_time   datetime        default current_timestamp comment '创建时间',
+  update_time   datetime        default current_timestamp on update current_timestamp comment '更新时间',
+  primary key (cache_key),
+  key idx_sys_cache_expire_at (expire_at)
+) engine=innodb default charset=utf8mb4 comment = '系统缓存键值表';
+
+
+-- ----------------------------
+-- 23、日志队列表
+-- ----------------------------
+drop table if exists sys_log_queue;
+create table sys_log_queue (
+  queue_id       bigint(20)     not null auto_increment    comment '队列ID',
+  event_id       varchar(64)    not null                   comment '事件唯一ID',
+  event_type     varchar(32)    not null                   comment '事件类型',
+  payload        longtext       not null                   comment '事件内容',
+  source         varchar(64)    default null               comment '事件来源',
+  status         varchar(16)    not null default 'pending' comment '状态',
+  locked_by      varchar(64)    default null               comment '锁定者',
+  locked_until   datetime       default null               comment '锁定到期',
+  attempt_count  int(11)        not null default 0         comment '重试次数',
+  last_error     varchar(500)   default null               comment '最后错误',
+  create_time    datetime       default current_timestamp  comment '创建时间',
+  update_time    datetime       default current_timestamp on update current_timestamp comment '更新时间',
+  processed_time datetime       default null               comment '处理时间',
+  primary key (queue_id),
+  unique key uk_sys_log_queue_event_id (event_id),
+  key idx_sys_log_queue_status (status),
+  key idx_sys_log_queue_locked_until (locked_until),
+  key idx_sys_log_queue_create_time (create_time)
+) engine=innodb default charset=utf8mb4 comment = '日志队列表';

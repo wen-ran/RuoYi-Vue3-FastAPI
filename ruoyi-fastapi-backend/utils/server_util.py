@@ -10,9 +10,9 @@ from fastapi import FastAPI, Request, applications
 from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html, get_swagger_ui_oauth2_redirect_html
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import HTMLResponse, JSONResponse
-from redis import asyncio as aioredis
 
 from config.env import AppConfig
+from utils.cache_store import CacheStore
 
 
 class APIDocsUtil:
@@ -344,7 +344,7 @@ class StartupUtil:
 
     @classmethod
     async def acquire_startup_log_gate(
-        cls, redis: aioredis.Redis, lock_key: str, worker_id: str, lock_expire_seconds: int
+        cls, redis: CacheStore, lock_key: str, worker_id: str, lock_expire_seconds: int
     ) -> bool:
         """
         获取启动日志门禁
@@ -364,7 +364,7 @@ class StartupUtil:
     @classmethod
     def start_lock_renewal(
         cls,
-        redis: aioredis.Redis,
+        redis: CacheStore,
         lock_key: str,
         worker_id: str,
         lock_expire_seconds: int,

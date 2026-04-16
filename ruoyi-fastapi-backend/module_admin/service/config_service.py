@@ -1,7 +1,6 @@
 from typing import Any
 
 from fastapi import Request
-from redis import asyncio as aioredis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from common.constant import CommonConstant
@@ -11,6 +10,7 @@ from exceptions.exception import ServiceException
 from module_admin.dao.config_dao import ConfigDao
 from module_admin.entity.vo.config_vo import ConfigModel, ConfigPageQueryModel, DeleteConfigModel
 from utils.common_util import CamelCaseUtil
+from utils.cache_store import CacheStore
 from utils.excel_util import ExcelUtil
 
 
@@ -36,7 +36,7 @@ class ConfigService:
         return config_list_result
 
     @classmethod
-    async def init_cache_sys_config_services(cls, query_db: AsyncSession, redis: aioredis.Redis) -> None:
+    async def init_cache_sys_config_services(cls, query_db: AsyncSession, redis: CacheStore) -> None:
         """
         应用初始化：获取所有参数配置对应的键值对信息并缓存service
 
@@ -57,7 +57,7 @@ class ConfigService:
             )
 
     @classmethod
-    async def query_config_list_from_cache_services(cls, redis: aioredis.Redis, config_key: str) -> Any:
+    async def query_config_list_from_cache_services(cls, redis: CacheStore, config_key: str) -> Any:
         """
         从缓存获取参数键名对应值service
 

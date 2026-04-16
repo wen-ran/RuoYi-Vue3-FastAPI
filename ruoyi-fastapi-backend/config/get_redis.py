@@ -1,38 +1,27 @@
 from fastapi import FastAPI
-from redis import asyncio as aioredis
-from redis.exceptions import AuthenticationError, RedisError
-from redis.exceptions import TimeoutError as RedisTimeoutError
 
 from config.database import AsyncSessionLocal
-from config.env import RedisConfig
 from module_admin.service.config_service import ConfigService
 from module_admin.service.dict_service import DictDataService
+from utils.cache_store import CacheStore
 from utils.log_util import logger
 
 
 class RedisUtil:
     """
-    Redis相关方法
+    兼容旧调用名称的缓存初始化工具。
     """
 
     @classmethod
-    async def create_redis_pool(cls, log_enabled: bool = True, log_start_enabled: bool | None = None) -> aioredis.Redis:
+    async def create_redis_pool(cls, log_enabled: bool = True, log_start_enabled: bool | None = None) -> CacheStore:
         """
-        应用启动时初始化redis连接
+        应用启动时初始化 MySQL 缓存存储。
 
         :param log_enabled: 是否输出日志
         :param log_start_enabled: 是否输出开始连接日志
-        :return: Redis连接对象
+        :return: 缓存连接对象
         """
-        redis = await aioredis.from_url(
-            url=f'redis://{RedisConfig.redis_host}',
-            port=RedisConfig.redis_port,
-            username=RedisConfig.redis_username,
-            password=RedisConfig.redis_password,
-            db=RedisConfig.redis_database,
-            encoding='utf-8',
-            decode_responses=True,
-        )
+        redis = CacheStore()
         if log_start_enabled is None:
             log_start_enabled = log_enabled
         if log_enabled or log_start_enabled:
@@ -41,12 +30,12 @@ class RedisUtil:
 
     @classmethod
     async def check_redis_connection(
-        cls, redis: aioredis.Redis, log_enabled: bool = True, log_start_enabled: bool | None = None
+        cls, redis: CacheStore, log_enabled: bool = True, log_start_enabled: bool | None = None
     ) -> None:
         """
-        检查redis连接状态
+        检查缓存连接状态。
 
-        :param redis: redis对象
+        :param redis: 缓存对象
         :param log_enabled: 是否输出日志
         :param log_start_enabled: 是否输出开始连接日志
         :return: None
@@ -54,54 +43,46 @@ class RedisUtil:
         if log_start_enabled is None:
             log_start_enabled = log_enabled
         if log_start_enabled:
-            logger.info('🔎 开始连接redis...')
-        try:
-            connection = await redis.ping()
-            if not log_enabled:
-                return
-            if connection:
-                logger.info('✅️ redis连接成功')
-            else:
-                logger.error('❌️ redis连接失败')
-        except AuthenticationError as e:
-            if log_enabled:
-                logger.error(f'❌️ redis用户名或密码错误，详细错误信息：{e}')
-        except RedisTimeoutError as e:
-            if log_enabled:
-                logger.error(f'❌️ redis连接超时，详细错误信息：{e}')
-        except RedisError as e:
-            if log_enabled:
-                logger.error(f'❌️ redis连接错误，详细错误信息：{e}')
+            logger.info('🔎 开始初始化 MySQL 缓存存储...')
+
+        connection = await redis.ping()
+        if not log_enabled:
+            return
+
+        if connection:
+            logger.info('✅️ MySQL 缓存存储初始化成功')
+        else:
+            logger.error('❌️ MySQL 缓存存储初始化失败')
 
     @classmethod
     async def close_redis_pool(cls, app: FastAPI) -> None:
         """
-        应用关闭时关闭redis连接
+        应用关闭时关闭缓存连接。
 
         :param app: fastapi对象
-        :return:
+        :return: None
         """
         await app.state.redis.close()
-        logger.info('✅️ 关闭redis连接成功')
+        logger.info('✅️ 关闭 MySQL 缓存存储成功')
 
     @classmethod
-    async def init_sys_dict(cls, redis: FastAPI) -> None:
+    async def init_sys_dict(cls, redis: CacheStore) -> None:
         """
-        应用启动时缓存字典表
+        应用启动时缓存字典表。
 
-        :param redis: redis对象
-        :return:
+        :param redis: 缓存对象
+        :return: None
         """
         async with AsyncSessionLocal() as session:
             await DictDataService.init_cache_sys_dict_services(session, redis)
 
     @classmethod
-    async def init_sys_config(cls, redis: aioredis.Redis) -> None:
+    async def init_sys_config(cls, redis: CacheStore) -> None:
         """
-        应用启动时缓存参数配置表
+        应用启动时缓存参数配置表。
 
-        :param redis: redis对象
-        :return:
+        :param redis: 缓存对象
+        :return: None
         """
         async with AsyncSessionLocal() as session:
             await ConfigService.init_cache_sys_config_services(session, redis)
