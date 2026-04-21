@@ -11,7 +11,6 @@
 
 <script setup>
 import usePermissionStore from '@/store/modules/permission'
-import { hasAccessibleRoute } from '@/utils/route'
 
 const route = useRoute()
 const router = useRouter()
@@ -19,10 +18,9 @@ const permissionStore = usePermissionStore()
 const levelList = ref([])
 
 function getBreadcrumb() {
-  // only show routes with meta.title
   let matched = []
   const pathNum = findPathNum(route.path)
-  // multi-level menu
+
   if (pathNum > 2) {
     const reg = /\/\w+/gi
     const pathList = route.path.match(reg).map((item, index) => {
@@ -33,13 +31,11 @@ function getBreadcrumb() {
   } else {
     matched = route.matched.filter((item) => item.meta && item.meta.title)
   }
-  // 只有当前用户拥有首页路由时，才在面包屑前补首页
-  if (!isDashboard(matched[0]) && hasAccessibleRoute(permissionStore.routes, '/index')) {
-    matched = [{ path: "/index", meta: { title: "首页" } }].concat(matched)
-  }
+
   levelList.value = matched.filter(item => item.meta && item.meta.title && item.meta.breadcrumb !== false)
 }
-function findPathNum(str, char = "/") {
+
+function findPathNum(str, char = '/') {
   let index = str.indexOf(char)
   let num = 0
   while (index !== -1) {
@@ -48,6 +44,7 @@ function findPathNum(str, char = "/") {
   }
   return num
 }
+
 function getMatched(pathList, routeList, matched) {
   let data = routeList.find(item => item.path == pathList[0] || (item.name += '').toLowerCase() == pathList[0])
   if (data) {
@@ -58,13 +55,7 @@ function getMatched(pathList, routeList, matched) {
     }
   }
 }
-function isDashboard(route) {
-  const name = route && route.name
-  if (!name) {
-    return false
-  }
-  return name.trim() === 'Index'
-}
+
 function handleLink(item) {
   const { redirect, path } = item
   if (redirect) {
@@ -75,12 +66,12 @@ function handleLink(item) {
 }
 
 watchEffect(() => {
-  // if you go to the redirect page, do not update the breadcrumbs
   if (route.path.startsWith('/redirect/')) {
     return
   }
   getBreadcrumb()
 })
+
 getBreadcrumb()
 </script>
 

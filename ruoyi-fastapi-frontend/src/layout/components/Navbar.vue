@@ -62,6 +62,7 @@ import HeaderSearch from '@/components/HeaderSearch'
 import useAppStore from '@/store/modules/app'
 import useUserStore from '@/store/modules/user'
 import useSettingsStore from '@/store/modules/settings'
+import { getStoredLoginPagePath } from '@/utils/loginPage'
 
 const appStore = useAppStore()
 const userStore = useUserStore()
@@ -91,7 +92,7 @@ function logout() {
     type: 'warning'
   }).then(() => {
     userStore.logOut().then(() => {
-      location.href = '/index'
+      location.href = getStoredLoginPagePath()
     })
   }).catch(() => { })
 }

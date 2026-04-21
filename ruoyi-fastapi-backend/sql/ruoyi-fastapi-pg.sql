@@ -153,6 +153,7 @@ create table sys_role (
     role_name varchar(30) not null,
     role_key varchar(100) not null,
     role_sort int4 not null,
+    login_page_key varchar(50) default null,
     data_scope char(1) default '1',
     menu_check_strictly smallint default 1,
     dept_check_strictly smallint default 1,

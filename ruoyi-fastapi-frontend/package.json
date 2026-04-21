@@ -1,14 +1,13 @@
 {
   "name": "vfadmin",
   "version": "1.9.0",
-  "description": "vfadmin管理系统",
+  "description": "鲸息管理系统",
   "author": "insistence",
   "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build:prod": "vite build",
-    "build:docker": "vite build --mode docker",
     "build:stage": "vite build --mode staging",
     "preview": "vite preview"
   },

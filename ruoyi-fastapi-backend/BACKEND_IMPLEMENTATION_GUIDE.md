@@ -93,8 +93,6 @@ flowchart TD
 
 - 默认：`.env.dev`
 - 生产：`.env.prod`
-- Docker MySQL：`.env.dockermy`
-- Docker PostgreSQL：`.env.dockerpg`
 
 配置分成几组：
 

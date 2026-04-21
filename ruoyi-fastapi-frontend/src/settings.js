@@ -1,56 +1,36 @@
+import { DEFAULT_SYSTEM_TITLE } from "@/utils/systemTitle";
+
 export default {
-  /**
-   * 网页标题
-   */
-  title: import.meta.env.VITE_APP_TITLE,
+  // Application title
+  title: DEFAULT_SYSTEM_TITLE,
 
-  /**
-   * 侧边栏主题 深色主题theme-dark，浅色主题theme-light
-   */
-  sideTheme: 'theme-dark',
+  // Sidebar theme: theme-dark or theme-light
+  sideTheme: "theme-dark",
 
-  /**
-   * 是否系统布局配置
-   */
+  // Whether to show the settings drawer
   showSettings: true,
 
-  /**
-   * 菜单导航模式 1、纯左侧 2、混合（左侧+顶部） 3、纯顶部
-   */
+  // Navigation layout: 1 = side, 2 = mixed, 3 = top
   navType: 1,
 
-  /**
-   * 是否显示 tagsView
-   */
+  // Whether to show tags view
   tagsView: true,
 
-  /**
-   * 显示页签图标
-   */
+  // Whether to show icons in tags view
   tagsIcon: false,
 
-  /**
-   * 是否固定头部
-   */
+  // Whether the header stays fixed
   fixedHeader: true,
 
-  /**
-   * 是否显示logo
-   */
+  // Whether to show the sidebar logo
   sidebarLogo: true,
 
-  /**
-   * 是否显示动态标题
-   */
+  // Whether to use dynamic document titles
   dynamicTitle: false,
 
-  /**
-   * 是否显示底部版权
-   */
+  // Whether to show the footer area
   footerVisible: false,
 
-  /**
-   * 底部版权文本内容
-   */
-  footerContent: 'Copyright © 2024-2026 insistence.tech All Rights Reserved.'
-}
+  // Footer text content
+  footerContent: ""
+};

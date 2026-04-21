@@ -289,22 +289,6 @@ npm run build:prod 或 yarn build:prod
 python3 app.py --env=prod
 ```
 
-### Docker Compose部署方式
-
-> ⚠️ **警告：** 默认未做数据持久化配置，请注意数据备份或自行配置持久化
-
-#### MySQL版本
-
-```bash
-docker compose -f docker-compose.my.yml up -d --build
-```
-
-#### PostgreSQL版本
-
-```bash
-docker compose -f docker-compose.pg.yml up -d --build
-```
-
 ## 交流与赞助
 
 如果有对本项目及FastAPI感兴趣的朋友，欢迎加入知识星球一起交流学习，让我们一起变得更强。如果你觉得这个项目帮助到了你，你可以请作者喝杯咖啡表示鼓励☕。扫描下面微信二维码添加微信备注VF-Admin即可进群。

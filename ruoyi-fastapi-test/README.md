@@ -4,7 +4,7 @@
 
 ## 功能特性
 
-- 使用默认方式手动启动前后端服务或`Docker Compose`自动启动项目前后端服务
+- 使用默认方式手动启动前后端服务
 - 测试环境已禁用验证码功能
 - 验证登录流程和认证机制
 - 测试所有受保护的页面功能
@@ -45,30 +45,6 @@ pip install -r requirements.txt
 python -m pytest -v
 ```
 
-### 方式二：使用Docker
-
-#### 进入测试目录
-
-```bash
-cd ruoyi-fastapi-test
-```
-
-#### 启动 Docker 服务
-
-```bash
-# MySQL版本
-docker compose -f docker-compose.test.my.yml up -d --build
-# PostgreSQL版本
-docker compose -f docker-compose.test.pg.yml up -d --build
-```
-
-#### 运行测试
-
-```bash
-pip install -r requirements.txt
-python -m pytest -v
-```
-
 ## 测试内容
 
 ### 登录测试
@@ -105,11 +81,11 @@ python -m pytest -v
 
 ## 配置说明
 
-使用 `docker-compose.test.my.yml`或`docker-compose.test.pg.yml`启动服务，默认前端端口为 `80`，后端端口为 `9099`。测试环境已禁用验证码功能。
+默认手动启动时，前端端口为 `80`，后端端口为 `9099`。测试环境已禁用验证码功能。
 
 ## 注意事项
 
-1. 确保系统已安装 Docker 和 Docker Compose
-2. 确保端口 `80` 和 `9099` 未被占用
-3. 首次运行时 Docker 镜像构建可能需要几分钟时间
+1. 确保端口 `80` 和 `9099` 未被占用
+2. 运行测试前请先分别启动前后端服务
+3. 首次运行 Playwright 时需要下载安装浏览器依赖
 4. 测试使用默认管理员账户：用户名 `admin`，密码 `admin123`

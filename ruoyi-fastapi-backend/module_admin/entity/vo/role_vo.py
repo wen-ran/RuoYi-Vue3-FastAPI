@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 from typing import Literal
 
@@ -5,18 +6,17 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 from pydantic.alias_generators import to_camel
 from pydantic_validation_decorator import NotBlank, Size
 
+from exceptions.exception import ModelValidatorException
+
 
 class RoleModel(BaseModel):
-    """
-    角色表对应pydantic模型
-    """
-
     model_config = ConfigDict(alias_generator=to_camel, from_attributes=True)
 
     role_id: int | None = Field(default=None, description='角色ID')
     role_name: str | None = Field(default=None, description='角色名称')
     role_key: str | None = Field(default=None, description='角色权限字符串')
     role_sort: int | None = Field(default=None, description='显示顺序')
+    login_page_key: str | None = Field(default=None, description='指定登录页标识')
     data_scope: Literal['1', '2', '3', '4', '5'] | None = Field(
         default=None,
         description='数据范围（1：全部数据权限 2：自定数据权限 3：本部门数据权限 4：本部门及以下数据权限 5：仅本人数据权限）',
@@ -30,27 +30,38 @@ class RoleModel(BaseModel):
     update_by: str | None = Field(default=None, description='更新者')
     update_time: datetime | None = Field(default=None, description='更新时间')
     remark: str | None = Field(default=None, description='备注')
-    admin: bool | None = Field(default=False, description='是否为admin')
+    admin: bool | None = Field(default=False, description='是否为管理员')
 
     @field_validator('menu_check_strictly', 'dept_check_strictly')
     @classmethod
-    def check_filed_mapping(cls, v: int | bool) -> int | bool:
-        if v == 1:
-            v = True
-        elif v == 0:
-            v = False
-        elif v is True:
-            v = 1
-        elif v is False:
-            v = 0
-        return v
+    def check_field_mapping(cls, value: int | bool | None) -> int | bool | None:
+        if value is None:
+            return None
+        if value == 1:
+            return True
+        if value == 0:
+            return False
+        if value is True:
+            return 1
+        if value is False:
+            return 0
+        return value
+
+    @field_validator('login_page_key')
+    @classmethod
+    def normalize_login_page_key(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized_value = value.strip().lower()
+        if not normalized_value:
+            return None
+        if not re.fullmatch(r'[a-z0-9_-]+', normalized_value):
+            raise ModelValidatorException(message='指定登录页标识格式不正确')
+        return normalized_value
 
     @model_validator(mode='after')
     def check_admin(self) -> 'RoleModel':
-        if self.role_id == 1:
-            self.admin = True
-        else:
-            self.admin = False
+        self.admin = self.role_id == 1
         return self
 
     @NotBlank(field_name='role_name', message='角色名称不能为空')
@@ -74,10 +85,6 @@ class RoleModel(BaseModel):
 
 
 class RoleMenuModel(BaseModel):
-    """
-    角色和菜单关联表对应pydantic模型
-    """
-
     model_config = ConfigDict(alias_generator=to_camel, from_attributes=True)
 
     role_id: int | None = Field(default=None, description='角色ID')
@@ -85,10 +92,6 @@ class RoleMenuModel(BaseModel):
 
 
 class RoleDeptModel(BaseModel):
-    """
-    角色和部门关联表对应pydantic模型
-    """
-
     model_config = ConfigDict(alias_generator=to_camel, from_attributes=True)
 
     role_id: int | None = Field(default=None, description='角色ID')
@@ -96,60 +99,36 @@ class RoleDeptModel(BaseModel):
 
 
 class RoleQueryModel(RoleModel):
-    """
-    角色管理不分页查询模型
-    """
-
     begin_time: str | None = Field(default=None, description='开始时间')
     end_time: str | None = Field(default=None, description='结束时间')
 
 
 class RolePageQueryModel(RoleQueryModel):
-    """
-    角色管理分页查询模型
-    """
-
     page_num: int = Field(default=1, description='当前页码')
     page_size: int = Field(default=10, description='每页记录数')
 
 
 class RoleMenuQueryModel(BaseModel):
-    """
-    角色菜单查询模型
-    """
-
     model_config = ConfigDict(alias_generator=to_camel)
 
     menus: list = Field(default=[], description='菜单信息')
-    checked_keys: list[int] = Field(default=[], description='已选择的菜单ID信息')
+    checked_keys: list[int] = Field(default=[], description='已选中的菜单ID')
 
 
 class RoleDeptQueryModel(BaseModel):
-    """
-    角色部门查询模型
-    """
-
     model_config = ConfigDict(alias_generator=to_camel)
 
     depts: list = Field(default=[], description='部门信息')
-    checked_keys: list[int] = Field(default=[], description='已选择的部门ID信息')
+    checked_keys: list[int] = Field(default=[], description='已选中的部门ID')
 
 
 class AddRoleModel(RoleModel):
-    """
-    新增角色模型
-    """
-
     dept_ids: list = Field(default=[], description='部门ID信息')
     menu_ids: list = Field(default=[], description='菜单ID信息')
     type: str | None = Field(default=None, description='操作类型')
 
 
 class DeleteRoleModel(BaseModel):
-    """
-    删除角色模型
-    """
-
     model_config = ConfigDict(alias_generator=to_camel)
 
     role_ids: str = Field(description='需要删除的角色ID')

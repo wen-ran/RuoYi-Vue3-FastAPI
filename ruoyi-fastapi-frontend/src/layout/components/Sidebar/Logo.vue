@@ -25,8 +25,8 @@ defineProps({
   }
 })
 
-const title = import.meta.env.VITE_APP_TITLE;
 const settingsStore = useSettingsStore();
+const title = computed(() => settingsStore.appTitle);
 const sideTheme = computed(() => settingsStore.sideTheme);
 
 // 获取Logo背景色

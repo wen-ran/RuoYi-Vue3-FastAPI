@@ -1,6 +1,7 @@
 import defaultSettings from '@/settings'
 import { useDark, useToggle } from '@vueuse/core'
 import { useDynamicTitle } from '@/utils/dynamicTitle'
+import { getStoredSystemTitle, setStoredSystemTitle } from '@/utils/systemTitle'
 
 const isDark = useDark()
 const toggleDark = useToggle(isDark)
@@ -14,6 +15,7 @@ const useSettingsStore = defineStore(
   {
     state: () => ({
       title: '',
+      appTitle: getStoredSystemTitle(),
       theme: storageSetting.theme || '#409EFF',
       sideTheme: storageSetting.sideTheme || sideTheme,
       showSettings: showSettings,
@@ -38,6 +40,12 @@ const useSettingsStore = defineStore(
       // 设置网页标题
       setTitle(title) {
         this.title = title
+        useDynamicTitle()
+      },
+      // 设置系统标题
+      setAppTitle(title) {
+        this.appTitle = title || getStoredSystemTitle()
+        setStoredSystemTitle(this.appTitle)
         useDynamicTitle()
       },
       // 切换暗黑模式

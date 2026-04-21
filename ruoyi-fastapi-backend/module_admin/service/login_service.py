@@ -48,6 +48,8 @@ class CustomOAuth2PasswordRequestForm(OAuth2PasswordRequestForm):
         client_secret: str | None = Form(default=None),
         code: str | None = Form(default=''),
         uuid: str | None = Form(default=''),
+        login_page_key: str | None = Form(default='default'),
+        loginPageKey: str | None = Form(default=None),
         login_info: dict[str, str] | None = Form(default=None),
     ) -> None:
         super().__init__(
@@ -60,6 +62,7 @@ class CustomOAuth2PasswordRequestForm(OAuth2PasswordRequestForm):
         )
         self.code = code
         self.uuid = uuid
+        self.login_page_key = login_page_key or loginPageKey or 'default'
         self.login_info = login_info
 
 
@@ -135,7 +138,27 @@ class LoginService:
             logger.warning('用户已停用')
             raise LoginException(data='', message='用户已停用')
         await request.app.state.redis.delete(f'{RedisInitKeyConfig.PASSWORD_ERROR_COUNT.key}:{login_user.user_name}')
+        await cls.__check_login_page_permission(query_db, login_user, user[0].user_id)
         return user
+
+    @staticmethod
+    def normalize_login_page_key(login_page_key: str | None) -> str:
+        normalized_key = login_page_key.strip().lower() if isinstance(login_page_key, str) else ''
+        return normalized_key or 'default'
+
+    @classmethod
+    async def __check_login_page_permission(
+        cls, query_db: AsyncSession, login_user: UserLogin, user_id: int
+    ) -> None:
+        query_user = await UserDao.get_user_by_id(query_db, user_id)
+        restricted_login_pages = {
+            cls.normalize_login_page_key(role.login_page_key)
+            for role in query_user.get('user_role_info') or []
+            if getattr(role, 'login_page_key', None)
+        }
+        current_login_page = cls.normalize_login_page_key(login_user.login_page_key)
+        if restricted_login_pages and current_login_page not in restricted_login_pages:
+            raise LoginException(data='', message='当前账号不允许通过该登录页登录')
 
     @classmethod
     async def __check_login_ip(cls, request: Request) -> bool:

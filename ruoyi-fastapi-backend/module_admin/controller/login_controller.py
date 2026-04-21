@@ -43,6 +43,7 @@ async def login(
         password=form_data.password,
         code=form_data.code,
         uuid=form_data.uuid,
+        loginPageKey=form_data.login_page_key,
         loginInfo=form_data.login_info,
         captchaEnabled=captcha_enabled,
     )

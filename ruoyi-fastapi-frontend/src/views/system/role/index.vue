@@ -98,6 +98,11 @@
          <el-table-column label="角色名称" prop="roleName" :show-overflow-tooltip="true" width="150" />
          <el-table-column label="权限字符" prop="roleKey" :show-overflow-tooltip="true" width="150" />
          <el-table-column label="显示顺序" prop="roleSort" width="100" />
+         <el-table-column label="指定登录页" min-width="220">
+            <template #default="scope">
+               <span>{{ getLoginPageText(scope.row.loginPageKey) }}</span>
+            </template>
+         </el-table-column>
          <el-table-column label="状态" align="center" width="100">
             <template #default="scope">
                <el-switch
@@ -156,12 +161,23 @@
                </template>
                <el-input v-model="form.roleKey" placeholder="请输入权限字符" />
             </el-form-item>
-            <el-form-item label="角色顺序" prop="roleSort">
-               <el-input-number v-model="form.roleSort" controls-position="right" :min="0" />
-            </el-form-item>
-            <el-form-item label="状态">
-               <el-radio-group v-model="form.status">
-                  <el-radio
+             <el-form-item label="角色顺序" prop="roleSort">
+                <el-input-number v-model="form.roleSort" controls-position="right" :min="0" />
+             </el-form-item>
+             <el-form-item label="指定登录页" prop="loginPageKey">
+                <el-select v-model="form.loginPageKey" placeholder="请选择指定登录页" clearable>
+                   <el-option label="不限制" value="" />
+                   <el-option
+                      v-for="item in loginPageOptions"
+                      :key="item.value"
+                      :label="`${item.label} (${item.path})`"
+                      :value="item.value"
+                   />
+                </el-select>
+             </el-form-item>
+             <el-form-item label="状态">
+                <el-radio-group v-model="form.status">
+                   <el-radio
                      v-for="dict in sys_normal_disable"
                      :key="dict.value"
                      :value="dict.value"
@@ -244,10 +260,12 @@
 <script setup name="Role">
 import { addRole, changeRoleStatus, dataScope, delRole, getRole, listRole, updateRole, deptTreeSelect } from "@/api/system/role";
 import { roleMenuTreeselect, treeselect as menuTreeselect } from "@/api/system/menu";
+import { formatLoginPagePath, getLoginPageLabel, LOGIN_PAGE_OPTIONS } from "@/views/login/pageRegistry";
 
 const router = useRouter();
 const { proxy } = getCurrentInstance();
 const { sys_normal_disable } = proxy.useDict("sys_normal_disable");
+const loginPageOptions = LOGIN_PAGE_OPTIONS;
 
 const roleList = ref([]);
 const open = ref(false);
@@ -304,6 +322,13 @@ function getList() {
     total.value = response.total;
     loading.value = false;
   });
+}
+
+function getLoginPageText(loginPageKey) {
+  if (!loginPageKey) {
+    return "不限制";
+  }
+  return `${getLoginPageLabel(loginPageKey)} (${formatLoginPagePath(loginPageKey)})`;
 }
 /** 搜索按钮操作 */
 function handleQuery() {
@@ -391,13 +416,14 @@ function reset() {
   deptExpand.value = true;
   deptNodeAll.value = false;
   form.value = {
-    roleId: undefined,
-    roleName: undefined,
-    roleKey: undefined,
-    roleSort: 0,
-    status: "0",
-    menuIds: [],
-    deptIds: [],
+     roleId: undefined,
+     roleName: undefined,
+     roleKey: undefined,
+     roleSort: 0,
+     loginPageKey: "",
+     status: "0",
+     menuIds: [],
+     deptIds: [],
     menuCheckStrictly: true,
     deptCheckStrictly: true,
     remark: undefined
@@ -417,10 +443,11 @@ function handleUpdate(row) {
   const roleId = row.roleId || ids.value;
   const roleMenu = getRoleMenuTreeselect(roleId);
   getRole(roleId).then(response => {
-    form.value = response.data;
-    form.value.roleSort = Number(form.value.roleSort);
-    open.value = true;
-    nextTick(() => {
+     form.value = response.data;
+     form.value.roleSort = Number(form.value.roleSort);
+     form.value.loginPageKey = form.value.loginPageKey || "";
+     open.value = true;
+     nextTick(() => {
       roleMenu.then((res) => {
         let checkedKeys = res.checkedKeys;
         checkedKeys.forEach((v) => {

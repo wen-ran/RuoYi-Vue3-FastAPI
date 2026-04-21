@@ -51,7 +51,6 @@
 
 1.优化数据权限依赖 ([#55](https://github.com/insistence/RuoYi-Vue3-FastAPI/pull/55))。
 2.动态导入定时任务函数，移除eval ([#56](https://github.com/insistence/RuoYi-Vue3-FastAPI/pull/56))。
-3.优化pg版本的docker compose配置文件 ([#61](https://github.com/insistence/RuoYi-Vue3-FastAPI/pull/61))。
 
 ## RuoYi-Vue3-FastAPI v1.8.0
 
@@ -69,8 +68,7 @@
 4.新增公共vo模块。
 5.新增配置文档静态资源方法。
 6.新增自动注册路由功能。
-7.新增docker compose部署方式。
-8.菜单导航设置支持纯顶部。
+7.菜单导航设置支持纯顶部。
 
 ### BUG修复
 

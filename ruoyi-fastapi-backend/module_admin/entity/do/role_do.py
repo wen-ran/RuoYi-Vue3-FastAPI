@@ -9,10 +9,6 @@ from utils.common_util import SqlalchemyUtil
 
 
 class SysRole(Base):
-    """
-    角色信息表
-    """
-
     __tablename__ = 'sys_role'
     __table_args__ = {'comment': '角色信息表'}
 
@@ -20,6 +16,12 @@ class SysRole(Base):
     role_name = Column(String(30), nullable=False, comment='角色名称')
     role_key = Column(String(100), nullable=False, comment='角色权限字符串')
     role_sort = Column(Integer, nullable=False, comment='显示顺序')
+    login_page_key = Column(
+        String(50),
+        nullable=True,
+        server_default=SqlalchemyUtil.get_server_default_null(DataBaseConfig.db_type),
+        comment='指定登录页标识',
+    )
     data_scope = Column(
         CHAR(1),
         nullable=True,
@@ -53,10 +55,6 @@ class SysRole(Base):
 
 
 class SysRoleDept(Base):
-    """
-    角色和部门关联表
-    """
-
     __tablename__ = 'sys_role_dept'
     __table_args__ = {'comment': '角色和部门关联表'}
 
@@ -65,10 +63,6 @@ class SysRoleDept(Base):
 
 
 class SysRoleMenu(Base):
-    """
-    角色和菜单关联表
-    """
-
     __tablename__ = 'sys_role_menu'
     __table_args__ = {'comment': '角色和菜单关联表'}
 
