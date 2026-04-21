@@ -3,11 +3,11 @@ from collections.abc import AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config.database import AsyncSessionLocal, Base, async_engine
-from module_standard.entity.do.standard_do import DocumentType, StandardContent, StandardInfo
+from module_standard.entity.do.standard_do import StdDocumentType, StdStandardContent, StdStandardInfo
 from utils.log_util import logger
 
 # Ensure the custom standard tables are present in Base.metadata before create_all runs.
-_REGISTERED_CUSTOM_MODELS = (StandardInfo, StandardContent, DocumentType)
+_REGISTERED_CUSTOM_MODELS = (StdStandardInfo, StdStandardContent, StdDocumentType)
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:

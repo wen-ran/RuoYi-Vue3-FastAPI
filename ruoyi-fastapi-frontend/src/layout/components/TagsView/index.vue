@@ -45,6 +45,7 @@
 <script setup>
 import ScrollPane from './ScrollPane'
 import { getNormalPath } from '@/utils/ruoyi'
+import { getFirstAccessibleRoute } from '@/utils/route'
 import useTagsViewStore from '@/store/modules/tagsView'
 import useSettingsStore from '@/store/modules/settings'
 import usePermissionStore from '@/store/modules/permission'
@@ -59,9 +60,10 @@ const scrollPaneRef = ref(null);
 const { proxy } = getCurrentInstance();
 const route = useRoute();
 const router = useRouter();
+const permissionStore = usePermissionStore();
 
 const visitedViews = computed(() => useTagsViewStore().visitedViews);
-const routes = computed(() => usePermissionStore().routes);
+const routes = computed(() => permissionStore.routes);
 const theme = computed(() => useSettingsStore().theme);
 const tagsIcon = computed(() => useSettingsStore().tagsIcon)
 
@@ -96,7 +98,7 @@ function isAffix(tag) {
 }
 function isFirstView() {
   try {
-    return selectedTag.value.fullPath === '/index' || selectedTag.value.fullPath === visitedViews.value[1].fullPath
+    return selectedTag.value.fullPath === visitedViews.value[0].fullPath
   } catch (err) {
     return false
   }
@@ -204,14 +206,7 @@ function toLastView(visitedViews, view) {
   if (latestView) {
     router.push(latestView.fullPath)
   } else {
-    // now the default is to redirect to the home page if there is no tags-view,
-    // you can adjust it according to your needs.
-    if (view.name === 'Dashboard') {
-      // to reload home page
-      router.replace({ path: '/redirect' + view.fullPath })
-    } else {
-      router.push('/')
-    }
+    router.push(getFirstAccessibleRoute(permissionStore.sidebarRouters))
   }
 }
 function openMenu(tag, e) {

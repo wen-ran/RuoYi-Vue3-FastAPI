@@ -78,6 +78,37 @@ class StandardContentPageQueryModel(StandardContentModel):
     page_size: int = Field(default=10, description='每页记录数')
 
 
+class StandardContentQueryModel(BaseModel):
+    """
+    标准正文内容查询结果模型
+    """
+
+    model_config = ConfigDict(alias_generator=to_camel, from_attributes=True)
+
+    id: int | None = Field(default=None, description='主键ID')
+    standard_no: str | None = Field(default=None, description='标准号')
+    name_zh: str | None = Field(default=None, description='中文名称')
+    file_path: str | None = Field(default=None, description='文件地址')
+    source_page_no: int | None = Field(default=None, description='所在文件页面')
+    clause_no: str | None = Field(default=None, description='条款编号')
+    content_type: str | None = Field(default=None, description='内容类型')
+    content_text_with_no: str | None = Field(default=None, description='内容（包含编号）')
+
+
+class StandardContentQueryPageQueryModel(BaseModel):
+    """
+    标准正文内容查询分页参数模型
+    """
+
+    model_config = ConfigDict(alias_generator=to_camel)
+
+    page_num: int = Field(default=1, description='当前页码')
+    page_size: int = Field(default=10, description='每页记录数')
+    standard_no: str | None = Field(default=None, description='标准号')
+    name_zh: str | None = Field(default=None, description='中文名称')
+    content_text_with_no: str | None = Field(default=None, description='内容（包含编号）')
+
+
 class DocumentTypeModel(BaseModel):
     """
     文档类型表对应pydantic模型

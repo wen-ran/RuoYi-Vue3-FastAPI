@@ -11,6 +11,7 @@
 
 <script setup>
 import usePermissionStore from '@/store/modules/permission'
+import { hasAccessibleRoute } from '@/utils/route'
 
 const route = useRoute()
 const router = useRouter()
@@ -32,8 +33,8 @@ function getBreadcrumb() {
   } else {
     matched = route.matched.filter((item) => item.meta && item.meta.title)
   }
-  // 判断是否为首页
-  if (!isDashboard(matched[0])) {
+  // 只有当前用户拥有首页路由时，才在面包屑前补首页
+  if (!isDashboard(matched[0]) && hasAccessibleRoute(permissionStore.routes, '/index')) {
     matched = [{ path: "/index", meta: { title: "首页" } }].concat(matched)
   }
   levelList.value = matched.filter(item => item.meta && item.meta.title && item.meta.breadcrumb !== false)

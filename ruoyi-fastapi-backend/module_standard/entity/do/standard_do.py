@@ -3,12 +3,12 @@ from sqlalchemy import BigInteger, Column, Date, DateTime, Integer, String, Text
 from config.database import Base
 
 
-class StandardInfo(Base):
+class StdStandardInfo(Base):
     """
     标准基础信息表
     """
 
-    __tablename__ = 'standard_info'
+    __tablename__ = 'std_standard_info'
     __table_args__ = {'comment': '标准基础信息'}
 
     id = Column(BigInteger, nullable=True, comment='主键ID')
@@ -34,12 +34,12 @@ class StandardInfo(Base):
     __mapper_args__ = {'primary_key': [id, standard_no]}
 
 
-class StandardContent(Base):
+class StdStandardContent(Base):
     """
     标准正文内容表
     """
 
-    __tablename__ = 'standard_content'
+    __tablename__ = 'std_standard_content'
     __table_args__ = {'comment': '标准正文内容'}
 
     id = Column(BigInteger, nullable=True, comment='主键ID')
@@ -66,12 +66,12 @@ class StandardContent(Base):
     __mapper_args__ = {'primary_key': [id, standard_no]}
 
 
-class DocumentType(Base):
+class StdDocumentType(Base):
     """
     文档类型表
     """
 
-    __tablename__ = 'document_type'
+    __tablename__ = 'std_document_type'
     __table_args__ = {'comment': '文档类型'}
 
     type_name = Column(String(100), nullable=True, comment='类型')

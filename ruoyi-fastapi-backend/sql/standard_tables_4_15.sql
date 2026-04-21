@@ -1,8 +1,8 @@
 -- ----------------------------
 -- 1、标准基础信息表
 -- ----------------------------
-drop table if exists standard_info;
-create table standard_info (
+drop table if exists std_standard_info;
+create table std_standard_info (
   id                    bigint(20)      default null               comment '主键ID',
   standard_no           varchar(100)    default null               comment '标准号',
   name_zh               varchar(500)    default null               comment '中文名称',
@@ -28,8 +28,8 @@ create table standard_info (
 -- ----------------------------
 -- 2、标准正文内容表
 -- ----------------------------
-drop table if exists standard_content;
-create table standard_content (
+drop table if exists std_standard_content;
+create table std_standard_content (
   id                    bigint(20)      default null               comment '主键ID',
   standard_no           varchar(100)    default null               comment '标准号',
   parent_node_id        bigint(20)      default null               comment '父节点ID',
@@ -52,8 +52,8 @@ create table standard_content (
 -- ----------------------------
 -- 3、文档类型表
 -- ----------------------------
-drop table if exists document_type;
-create table document_type (
+drop table if exists std_document_type;
+create table std_document_type (
   type_name             varchar(100)    default null               comment '类型',
   sort_no               int(4)          default null               comment '序号',
   created_at            datetime        default null               comment '创建时间',
@@ -68,9 +68,9 @@ create table document_type (
 -- ----------------------------
 -- 初始化-文档类型表数据
 -- ----------------------------
-insert into document_type values('图片',       1, null, null, null, null, null, null);
-insert into document_type values('表格',       2, null, null, null, null, null, null);
-insert into document_type values('公式',       3, null, null, null, null, null, null);
-insert into document_type values('标题',       4, null, null, null, null, null, null);
-insert into document_type values('有编号内容', 5, null, null, null, null, null, null);
-insert into document_type values('无编号内容', 6, null, null, null, null, null, null);
+insert into std_document_type values('图片',       1, null, null, null, null, null, null);
+insert into std_document_type values('表格',       2, null, null, null, null, null, null);
+insert into std_document_type values('公式',       3, null, null, null, null, null, null);
+insert into std_document_type values('标题',       4, null, null, null, null, null, null);
+insert into std_document_type values('有编号内容', 5, null, null, null, null, null, null);
+insert into std_document_type values('无编号内容', 6, null, null, null, null, null, null);
